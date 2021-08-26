@@ -1,4 +1,7 @@
-regex replace with nothing:
+I write content in Excel in column per object format, then transpose to row per object and export to CSV.
+Convert to JSON on http://convertcsv.com/csv-to-json.htm (site may freeze with big lists),
+
+Then open result in VSC and search & replace the following regex with nothing (VSC may freeze with big lists for the first replaces):
 
 ,\n[ ]*(""|null)
 \n[ ]*(""|null),
@@ -16,4 +19,4 @@ regex replace with nothing:
 \n[ ]*"[_,A-Z,a-z,0-9]*": \[\n[ ]*\],
 \n[ ]*"[_,A-Z,a-z,0-9]*": \[\n[ ]*\]
 
-Repeat list until no results
+Repeat list until no more results are found.

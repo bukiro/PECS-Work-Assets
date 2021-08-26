@@ -4,6 +4,7 @@ Internal To Do list
 ## To Do
 
 :x: Initialize basic Node.js app
+
 :x: We are using AngularJS now
 - [x] We are using TypeScript now
 - [x] Learn a language

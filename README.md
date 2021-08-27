@@ -124,6 +124,8 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
+- After mobile makeover, all popovers need a close button on mobile.
+- Allow tabbing through the boxes on mobile - either with filtered views or just with scrollTo.
 
 Implement:
 

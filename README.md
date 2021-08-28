@@ -124,22 +124,13 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- After mobile makeover, all popovers need a close button on mobile.
-- Allow tabbing through the boxes on mobile - either with filtered views or just with scrollTo.
+- Cleric
 
 Implement:
 
 Test:
 
 Bugs:
-- Circular Dependencies between components that use app-tags and hints that show where they came from
-- - Need a way to show the hint's origin without using app-feat, app-activity, app-condition etc.
-- - This is not a breaking bug as long as no actual circular reference occurs (e.g. a hint on an activity that comes from the feat that grants and shows the activity (with the hint on it))
-- - For testing: Error occurs in Battle Prayer
-- - Probably fixed, need to test in a session
-- - Looking good so far
-- Inventory Gridicons don't update when drag-dropping items onto a stack
-- - Could not reproduce
 
 Next steps:
 - Implement all Worn Items
@@ -150,5 +141,4 @@ Next steps:
 - Shoony feats
 - Implement Conditions for Poisons
 - Champion
-- Cleric
 - Alchemist

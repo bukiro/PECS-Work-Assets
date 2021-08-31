@@ -127,6 +127,8 @@ Active to-do:
 - Cleric
 
 Implement:
+- Change Skilled Heritage from hardcoded skill increase to feat with subfeats
+- Verify that all basic mechanims of Cleric are working (i.e. check skill increases and features/feats on every level)
 
 Test:
 

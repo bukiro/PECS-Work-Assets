@@ -124,11 +124,15 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- Cleric
+- Cleric feats
+- Test all Cleric feats
+- Check which of the services should re-initialize their data if a character is loaded:
+- - What should be the rule here?
+- - If json data has changed, the page should be reloaded instead
+- - If data can be changed in the app, it should be reset when character change (e.g. items)
 
 Implement:
-- Change Skilled Heritage from hardcoded skill increase to feat with subfeats
-- Verify that all basic mechanims of Cleric are working (i.e. check skill increases and features/feats on every level)
+- Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 
 Test:
 

@@ -124,21 +124,19 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- Cleric feats
-- Test all Cleric feats
-- Check which of the services should re-initialize their data if a character is loaded:
-- - What should be the rule here?
-- - If json data has changed, the page should be reloaded instead
-- - If data can be changed in the app, it should be reset when character change (e.g. items)
 
 Implement:
-- Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 
 Test:
 
 Bugs:
 
 Next steps:
+- Display toast message if no database string or connection failed
+- Change Drop button to popup on item with granted items, and confirm deletion on container items
+- Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
+- Fill out PFS notes for all feats
+- Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation) - find out if new objects can now be cast properly with something like reassign().
 - Implement all Worn Items
 - Many Activities need conditions (caster conditions at least)
 - Gnome feats

@@ -124,19 +124,25 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
+- Implement advanced domain spells
 
 Implement:
+- Effects with strings (e.g. for extra damage or for effects on Size)
+- Effects that pretend to be toggle (e.g. Activity Disabled effects that are activated with a calculated setValue of 1 or null)
 
 Test:
 
 Bugs:
 
 Next steps:
+- Check all hints on Attack on whether they should also show on Spellbook (since spells can attack)
+- Create recast() method on all classes to replace the global reassign function
+- Implement source filter for endsWithCondition parameter on conditions, so a condition can for example end only when its own sickened condition ends, not any sickened condition.
 - Display toast message if no database string or connection failed
 - Change Drop button to popup on item with granted items, and confirm deletion on container items
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 - Fill out PFS notes for all feats
-- Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation) - find out if new objects can now be cast properly with something like reassign().
+- Maybe: Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation) - find out if new objects can now be cast properly with something like reassign().
 - Implement all Worn Items
 - Many Activities need conditions (caster conditions at least)
 - Gnome feats

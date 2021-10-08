@@ -133,10 +133,7 @@ Test:
 Bugs:
 
 Next steps:
-- Rework weapon traits to include quickdice and effects where possible (e.g. Deadly and Forceful, but need to apply to the specific weapon only)
-- Create recast() method on all classes to replace the global reassign function
 - Implement source filter for endsWithCondition parameter on conditions, so a condition can for example end only when its own sickened condition ends, not any sickened condition.
-- Display toast message if no database string or connection failed
 - Change Drop button to popup on item with granted items, and confirm deletion on container items
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 - Fill out PFS notes for all feats

@@ -84,7 +84,7 @@ Internal To Do list
 - [x] - Barbarian
 - [x] - Bard
 - [ ] - Champion
-- [ ] - Cleric
+- [x] - Cleric
 - [x] - Druid
 - [x] - Fighter
 - [x] - Monk
@@ -133,8 +133,6 @@ Test:
 Bugs:
 
 Next steps:
-- Implement source filter for endsWithCondition parameter on conditions, so a condition can for example end only when its own sickened condition ends, not any sickened condition.
-- Change Drop button to popup on item with granted items, and confirm deletion on container items
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 - Fill out PFS notes for all feats
 - Maybe: Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation) - find out if new objects can now be cast properly with something like reassign().

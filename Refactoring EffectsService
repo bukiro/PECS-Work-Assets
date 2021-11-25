@@ -1,0 +1,50 @@
+Functionality from effectsService
+- Generate Effects -> effectsGenerationService
+- Get Effects from Object -> effectsGenerationService
+- Evaluate Formulas -> evaluationService
+- Generate Conditions from items -> conditionsService
+- Update components -> refreshService
+
+Functionality from characterService
+- Update components -> refreshService
+
+To do:
+Clean code concepts (https://github.com/labs42io/clean-code-typescript)
+[x] Use pronounceable variable names
+[x] Use the same vocabulary for the same type of variable
+[ ] Use searchable names
+[ ] Use explanatory variables
+[x] Avoid Mental Mapping
+[x] Don't add unneeded context
+[x] Use default arguments
+[ ] Use enum to document the intent
+[x] Use fewer function arguments
+[x] Functions should do one thing
+[x] Function names should say what they do
+[x] Functions should only be one level of abstraction
+[x] Remove duplicate code
+[x] Set default objects with Object.assign or destructuring
+[x] Don't use flags as function parameters
+[x] Avoid Side Effects
+[x] Don't write to global functions
+[x] Favor functional programming over imperative programming
+[x] Encapsulate conditionals
+[x] Avoid Negative Conditionals
+[x] Avoid Conditionals
+[x] Avoid type checking
+[x] Don't over-optimize
+[x] Remove dead code
+[ ] Use iterators and generators
+[x] Use getters and setters
+[x] Make objects have private/protected members
+[x] Prefer immutability
+[ ] Classes should be small
+[ ] High cohesion and low coupling
+[x] Prefer composition over inheritance
+[x] Use method chaining
+
+Personal recommendations
+[x] Type variables and Methods
+[x] Always define visibility
+[x] Verify need for get_ methods
+[x] Use get/set where applicable

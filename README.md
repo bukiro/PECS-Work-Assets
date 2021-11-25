@@ -96,7 +96,7 @@ Internal To Do list
 - [ ] - Focus Spells
 - [x] -- Monk
 - [ ] -- Champion
-- [ ] -- Cleric
+- [x] -- Cleric
 - [x] -- Wizard
 - [x] -- Bard
 - [x] -- Druid
@@ -124,18 +124,20 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- Implement advanced domain spells
 
 Implement:
+- Chunks & Ingots of materials
 
 Test:
+- What happens if no divine skill is available? A free skill training should become available, but it probably doesn't yet.
 
 Bugs:
+- When loading Targeto, the parry hint is not shown on Defense until a refresh.
 
 Next steps:
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 - Fill out PFS notes for all feats
-- Maybe: Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation) - find out if new objects can now be cast properly with something like reassign().
+- Maybe: Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation).
 - Implement all Worn Items
 - Many Activities need conditions (caster conditions at least)
 - Gnome feats

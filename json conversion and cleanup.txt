@@ -2,7 +2,7 @@ I write content in Excel in column per object format, then transpose to row per 
 
 Before exports, replace all these characters in Excel:
 – => -
-’ => ' 
+’ => '
 “ => "
 ” => "
 With spaces (but without brackets):

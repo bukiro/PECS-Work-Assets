@@ -126,13 +126,10 @@ Internal To Do list
 Active to-do:
 
 Implement:
-- Chunks & Ingots of materials
 
 Test:
-- What happens if no divine skill is available? A free skill training should become available, but it probably doesn't yet.
 
 Bugs:
-- When loading Targeto, the parry hint is not shown on Defense until a refresh.
 
 Next steps:
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?

@@ -126,6 +126,7 @@ Internal To Do list
 Active to-do:
 
 Implement:
+- Boots of Bounding (for Sni)
 
 Test:
 

@@ -120,13 +120,15 @@ Internal To Do list
 - [ ] Stretch Goal: Bitmap Icons for items, spells, feats, activities etc.
 - [ ] Stretch Goal: Initiative tracker, battles, being a battle member, GM-Player-Communication.......
 - [ ] Stretch Goal: Include optional systems like Stamina & Resolve
-- [x] Stretch Goal: Icon-Driven UI with dynamic tooltips
+- [x] Stretch Goal: Icon-driven UI with dynamic tooltips
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
+- All components with a change subscription need an ngOnDestroy function that unsubscribes
 
 Implement:
-- Boots of Bounding (for Sni)
+- Familiars need to have an inventory and be able to equip companion items (ughhhh)
+- Cache system to prevent re-calculating complicated values if nothing has changed
 
 Test:
 
@@ -138,6 +140,7 @@ Next steps:
 - Maybe: Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation).
 - Implement all Worn Items
 - Many Activities need conditions (caster conditions at least)
+- - Battle Medicine
 - Gnome feats
 - Hobgoblin feats
 - Leshy feats

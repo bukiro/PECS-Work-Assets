@@ -1,0 +1,27 @@
+- Performance in PECS is improved by only refreshing components if called for, i.e. if services or components push their name into the refresh list.
+- Some components still need to be refreshed a lot, which can slow down performance if they need to make complex calculations.
+- Attacks are particularly complicated to calculate if many weapons or bombs are equipped.
+- Idea: Let complex calculations check whether their parts have changed:
+    - Cache all variables, then check if there is reason to assume that the variables have changed.
+    - For proficiency, cache all proficiency results, cache all skills (even temporary skills), then let each skill cache all its dependencies etc.
+    - For effects, let the events service cache all effect names and mark them as dirty if they have changed since the last effect generation.
+    - At each method/function, check if any of the dependencies have been marked as dirty. If not, use the cached value. If yes, re-calculate and re-cache.
+    - E.g. for skill modifiers, let the skill cache its modifier and return it unless a dependency has changed. Let the weapon cache its proficiency and re-calculate only if one of its possible skills is dirty.
+    - Should these values be cached in the class object (easier to manage and retrieve) or in a dedicated service? (easier to mark as cleared)?
+    - Will these constant checks be worse for performance than just re-calculating? Can they be done without using strings at all stages?
+    - How to verify dependencies for specialreqs and other eval'ed values? Secondary variable that lists dependencies? Cache specialreq result for each feat etc?
+
+Performance test before:
+- Applying multiple attack penalty (Ranger Level 10 with lots of weapons): 
+    - 0,55s until redrawn
+- Opening level 20 class feats (Cleric Level 1 (Clerics have a lot of specialreq feats)):
+    - 1,1s until redrawn if level 10 feats opened and closed before
+    - 0,52s until redrawn if level 10 ability boosts opened before (not closed)
+
+First steps:
+- [x] Create cache service
+- [x] Expand Skill class to check for cache changes
+- [x] Let skill increases update cache
+- [x] Let feat taking update cache
+- [x] Let effects update cache
+- [x] Let animal companion changes update cache

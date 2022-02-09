@@ -124,10 +124,8 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- All components with a change subscription need an ngOnDestroy function that unsubscribes
 
 Implement:
-- Familiars need to have an inventory and be able to equip companion items (ughhhh)
 - Cache system to prevent re-calculating complicated values if nothing has changed
 
 Test:
@@ -135,6 +133,7 @@ Test:
 Bugs:
 
 Next steps:
+- Implement Bulk Conversions for creature size (p. 295 Core Rulebook) (https://2e.aonprd.com/Rules.aspx?ID=257)
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 - Fill out PFS notes for all feats
 - Maybe: Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation).

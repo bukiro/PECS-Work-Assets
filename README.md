@@ -124,6 +124,7 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
+- Implement all Worn Items (Core Rulebook)
 
 Implement:
 - Cache system to prevent re-calculating complicated values if nothing has changed
@@ -137,7 +138,6 @@ Next steps:
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 - Fill out PFS notes for all feats
 - Maybe: Move custom content to database, then allow custom content creation in app (very simplified version of the custom item creation).
-- Implement all Worn Items
 - Many Activities need conditions (caster conditions at least)
 - - Battle Medicine
 - Gnome feats

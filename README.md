@@ -125,6 +125,8 @@ Internal To Do list
 
 Active to-do:
 - Implement all Worn Items (Core Rulebook)
+- Keep or remove the counterspellOnly property on SpellChoice and the matching functionalities; Change Ring of Counterspells from storedSpell to data if the property is removed. The ring is not finished until this decision is made.
+- Consider changing Cassock of Devotion to one item with a hardcoded mechanism instead of one item per skill.
 
 Implement:
 - Cache system to prevent re-calculating complicated values if nothing has changed
@@ -134,6 +136,7 @@ Test:
 Bugs:
 
 Next steps:
+- Add options to resting: Duration, whether to tick once per day things...
 - Implement Bulk Conversions for creature size (p. 295 Core Rulebook) (https://2e.aonprd.com/Rules.aspx?ID=257)
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?
 - Fill out PFS notes for all feats

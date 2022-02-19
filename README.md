@@ -137,6 +137,7 @@ Test:
 Bugs:
 
 Next steps:
+- Set IconValueOverride for items with multiple subtypes and for items with subtype "Type *"
 - Add options to resting: Duration, whether to tick once per day things...
 - Implement Bulk Conversions for creature size (p. 295 Core Rulebook) (https://2e.aonprd.com/Rules.aspx?ID=257)
 - Change Skilled Heritage from hardcoded skill increase to feat with subfeats?

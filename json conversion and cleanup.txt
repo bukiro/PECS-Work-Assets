@@ -8,7 +8,12 @@ Before exports, replace all these characters in Excel:
 With spaces (but without brackets):
 — => ( - )
 
-Convert to JSON on http://convertcsv.com/csv-to-json.htm (site may freeze with big lists),
+Scripts:
+
+csv-to-json.ps1 converts all csv files in its input folder into a json file in the output folder and optionally can split the file by an attribute (like _extensionFileName). Empty attributes are deleted automatically.
+json-to-csv.ps1 converts all json files in the input folder into one csv file.
+
+Alternatively, convert to JSON on http://convertcsv.com/csv-to-json.htm (site may freeze with big lists),
 then open result in VSC and search & replace the following regex with nothing (VSC may freeze with big lists for the first replaces):
 
 ,\n[ ]*(""|null)

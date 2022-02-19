@@ -4,7 +4,8 @@ Param (
     [string]$InFile = "*",
     [string]$OutFile = "",
     [string]$Split = "",
-    [int]$First = 0
+    [int]$First = 0,
+    [switch]$NoSort
 )
 
 if (-not ($OutFile)) {
@@ -34,6 +35,7 @@ try {
 }
 catch {
     Write-Host "CSV $InPath could not be imported."
+    Write-Host -ForegroundColor Red $_
     Exit 1
 }
 
@@ -251,14 +253,16 @@ Foreach ($Object in $Objects) {
 Write-Progress -Activity "Step 3 of 3: Cleaning up..." -PercentComplete 100 -Completed
 Write-Host "Cleaned $Progress objects."
 
-if ($Objects.name -and $objects.level) {
-    $Objects = $Objects | Sort-Object -Property level, name
-}
-elseif ($Objects.name) {
-    $Objects = $Objects | Sort-Object -Property name
-}
-elseif ($Objects.level) {
-    $Objects = $Objects | Sort-Object -Property level
+if (-not $NoSort) {
+    if ($Objects.name -and $objects.level) {
+        $Objects = $Objects | Sort-Object -Property level, name
+    }
+    elseif ($Objects.name) {
+        $Objects = $Objects | Sort-Object -Property name
+    }
+    elseif ($Objects.level) {
+        $Objects = $Objects | Sort-Object -Property level
+    }
 }
 
 if ($Split) {

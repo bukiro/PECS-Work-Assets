@@ -7,6 +7,7 @@ Param (
 
 $BaseProperties = @(
     "name",
+    "displayName",
     "id",
     "desc",
     "type",
@@ -56,6 +57,7 @@ foreach ($File in (Get-ChildItem $InPath | Where-Object { $_.Name -like "*.json"
     }
     catch {
         Write-Host "$($File.Name) could not be imported."
+        Write-Host -ForegroundColor Red $_
     }
 }
 

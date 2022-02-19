@@ -125,11 +125,12 @@ Internal To Do list
 
 Active to-do:
 - Implement all Worn Items (Core Rulebook)
-- Keep or remove the counterspellOnly property on SpellChoice and the matching functionalities; Change Ring of Counterspells from storedSpell to data if the property is removed. The ring is not finished until this decision is made.
-- Consider changing Cassock of Devotion to one item with a hardcoded mechanism instead of one item per skill.
 
 Implement:
 - Cache system to prevent re-calculating complicated values if nothing has changed
+- Plane Shift
+- True Seeing
+- Spell Turning
 
 Test:
 
@@ -150,3 +151,4 @@ Next steps:
 - Implement Conditions for Poisons
 - Champion
 - Alchemist
+- Implement better graphical item creation tool

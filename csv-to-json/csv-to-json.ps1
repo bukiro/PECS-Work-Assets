@@ -8,6 +8,8 @@ Param (
     [switch]$NoSort
 )
 
+$InFile = "conditions.csv"
+
 if (-not ($OutFile)) {
     if ($Infile -ne "*") {
         $OutFile = $InFile -Replace "\.csv", ".json"
@@ -15,7 +17,11 @@ if (-not ($OutFile)) {
     else {
         $OutFile = "csv-to-json.json"
     }
-    
+}
+
+if ($InFile -eq "*") {
+    Write-Host "No file given, using first file in input folder: "
+    $InFile = (Get-ChildItem "$($MyInvocation.MyCommand.Path.Replace('\csv-to-json.ps1', ''))\Input\" | Select-Object -First 1).Name
 }
 
 $InPath = "$($MyInvocation.MyCommand.Path.Replace('\csv-to-json.ps1', ''))\Input\$InFile"
@@ -24,9 +30,11 @@ $OutPath = "$($MyInvocation.MyCommand.Path.Replace('\csv-to-json.ps1', ''))\Outp
 $script:stringOverrides = @(
     "effects\/[\d]+\/value$",
     "effects\/[\d]+\/setValue$",
+    "Effects\/[\d]+\/value$",
     "^bulk$",
     "gainSpells\/[\d]+\/dynamicLevel$",
-    "\/[\d]+\/0/dynamicEffectiveSpellLevel$"
+    "\/[\d]+\/0/dynamicEffectiveSpellLevel$",
+    "descs\/[\d]+\/value$"
 )
 
 $script:ImportedCSV = $()
@@ -39,6 +47,8 @@ catch {
     Exit 1
 }
 
+$ImportedCSV = $ImportedCSV |Where name -eq "Dragon Transformation"
+
 if ($Split) {
     if (($importedCSV.$Split | Where-Object { $_ }).Count -eq 0) {
         Write-Host "No row has the field '$Split' - content will not be split."
@@ -46,125 +56,102 @@ if ($Split) {
     }
 }
 
-Class JSONProperty {
-    [string]$Name
-    [string]$Path
-    [JSONProperty[]]$Properties = @()
-    [boolean]$isString = $false
-    [boolean]$isNumber = $false
-    [boolean]$isBoolean = $false
-    [boolean]$isArray = $false
-    
-    #JSONProperty([string]$Name, [string]$Path, [boolean]$Array = $false) {
-    JSONProperty([string]$Name, [string]$Path) {
-        $this.Name = $Name
-        $this.Path = $Path
-    }
-
-    setType() {
-        if ($this.Name -Match "\d") {
-            $this.isArray = $true
-            return
-        }
-        #Variables in the string overrides list are always strings.
-        if (($script:stringOverrides | Where-Object { $Property.Path -match $_ }).Count -gt 0) {
-            $this.isString = $true
-            return
-        }
-    
-        foreach ($Value in ($script:ImportedCSV."$($this.Path)" | Where-Object { $_ })) {
-            if ($this.isString) {
-                break;
-            }
-            if ($value -match "^-?\d+(\.\d+)?$") {
-                $this.isNumber = $true
-            }
-            elseif (($value -eq "TRUE") -or ($value -eq "FALSE")) {
-                $this.isBoolean = $true
-            }
-            else {
-                $this.isString = $true
-                $this.isNumber = $false
-                $this.isBoolean = $false
-                $this.isArray = $false
-            }
-        }
-        return
-    }
-}
-
-function Convert-DataType([string]$value, [JSONProperty]$Property) {
-    if (-not $value) {
+function Convert-DataType([string]$Value, [string]$Path) {
+    if ($isStringList -Contains $Path) {
         return $value
     }
-    if ($Property.isString) {
-        return $value
+    elseif ($value -match "^-?\d+(\.\d+)$") {
+        return [convert]::ToDecimal($value)
     }
-    elseif ($Property.isNumber) {
-        if ($value -match "^-?\d+(\.\d+)$") {
-            return [convert]::ToDecimal($value)
-        }
-        else {
-            return [convert]::ToInt32($value)
-        }
+    elseif ($value -match "^-?\d+$") {
+        return [convert]::ToInt32($value)
     }
-    elseif ($Property.isBoolean) {
-        if ($value -eq "TRUE") {
-            return $true
-        }
-        else {
-            return $false   
-        }
+    elseif ($value -eq "TRUE") {
+        return $true
+    }
+    elseif ($Value -eq "FALSE") {
+        return $false   
     }
     else {
         return $value
     }
 }
 
-function New-Property([PSObject]$Row, [JSONProperty]$Property) {
-    if ($Property.Properties.Count -gt 0) {
-        if ($Property.Properties[0].Name -Match "\d") {
-            $ArrayObject = [System.Collections.ArrayList]::new()
-            foreach ($SubProperty in $Property.Properties) {
-                $ArrayObject.Add((New-Property $Row $SubProperty)) | Out-Null
+function New-Property($Parts, $Row, $Basis, $Current, $Path) {
+    $Next = $Current + 1
+    if ($Next -eq $Parts.Count) {
+        if ($Row.$Path -eq "Undead Creature Damage Resistance") {
+            $Test | Out-Null
+        }
+        return (Convert-DataType $Row.$Path $Path)
+    }
+    else {
+        if ($Parts[$Next] -match "^\d+$") {
+            if ($Basis.$($Parts[$Current])) {
+                $ArrayObject = [System.Collections.ArrayList]@($Basis.$($Parts[$Current]))
+            }
+            else {
+                $ArrayObject = ([System.Collections.ArrayList]::new())
+            }
+            if ($ArrayObject[$Parts[$Next]]) {
+                $ArrayObject[$Parts[$Next]] = (New-Property $Parts $Row $ArrayObject $Next $Path)
+            }
+            else {
+                While ($ArrayObject.Count -lt $Parts[$Next]) {
+                    $ArrayObject.Add("") | Out-Null
+                }
+                $ArrayObject.Add((New-Property $Parts $Row $ArrayObject $Next $Path)) | Out-Null
             }
             return $ArrayObject
         }
         else {
-            $SubObject = New-Object -TypeName PSObject
-            foreach ($SubProperty in $Property.Properties) {
-                Add-Member -InputObject $SubObject -MemberType NoteProperty -Name $SubProperty.Name -Value (New-Property $Row $SubProperty)
-                if (($SubProperty.Properties.Count -gt 0) -and ($SubProperty.Properties[0].Name -Match "\d")) {
-                    if (-not ($SubObject."$($SubProperty.Name)" -is [array])) {
-                        $SubObject."$($SubProperty.Name)" = [array]@($SubObject."$($SubProperty.Name)")
-                    }
+            if ($Basis -is [System.Collections.ArrayList]) {
+                if ($Basis[$($Parts[$Current])]) {
+                    $SubObject = ($Basis[$($Parts[$Current])])
+                }
+                else {
+                    $SubObject = (New-Object PSObject)
+                }
+            }
+            elseif ($Basis.$($Parts[$Current])) {
+                $SubObject = ($Basis.$($Parts[$Current]))
+            }
+            else {
+                $SubObject = (New-Object PSObject)
+            }
+            if ($SubObject.$($Parts[$Next])) {
+                $SubObject.$($Parts[$Next]) = (New-Property $Parts $Row $SubObject $Next $Path)
+            }
+            else {
+                Add-Member -InputObject $SubObject -MemberType NoteProperty -Name $Parts[$Next] -Value (New-Property $Parts $Row $SubObject $Next $Path)
+            }
+            if ($Parts[$Next + 1] -and $Parts[$Next + 1] -match "^\d+$") {
+                if ($Parts[$Next] -isnot [System.Collections.ArrayList]) {
+                    $SubObject.$($Parts[$Next]) = [System.Collections.ArrayList]@($SubObject.$($Parts[$Next]))
                 }
             }
             return $SubObject
         }
     }
-    else {
-        return Convert-DataType $Row."$($Property.Path)" $Property
-    }
 }
 
 function Update-Property($Object) {
     forEach ($Property in $Object.PSObject.Properties.Name) {
-        if ($Object.$Property -is [array]) {
+        if (($Object.$Property -is [System.Collections.ArrayList]) -or ($Object.$Property -is [array])) {
             foreach ($Index in 0..($Object.$Property.Count - 1)) {
                 if ($Object.$Property[$Index] -is [psobject]) {
                     Update-Property $Object.$Property[$Index]
                     if (-not @($Object.$Property[$Index].PSObject.Properties.Count)) {
                         $Object.$Property[$Index] = ""
                     }
-                }
+                } 
             }
             $Object.$Property = $Object.$Property | Where-Object { $_ -ne "" }
             if ($Object.$Property.Count -eq 0) {
                 $Object.PSObject.Properties.Remove($Property)
             }
             else {
-                $Object.$Property = [array]@($Object.$Property)
+                $Object.$Property = [System.Collections.ArrayList]@($Object.$Property)
             }
         }
         elseif ($Object.$Property -is [psobject]) {
@@ -180,43 +167,34 @@ function Update-Property($Object) {
     }
 }
 
-[JSONProperty[]]$Template = @()
+$Progress = 0
+
+$isStringList = [System.Collections.ArrayList]::new()
 
 $Headers = $ImportedCSV[0].PSObject.Properties.Name
 
-$Progress = 0
-
 foreach ($Header in $Headers) {
-    $Parts = $Header -Split "\/"
-    if (-not ($Template.Name -Contains $Parts[0])) {
-        $Template += [JSONProperty]::New($Parts[0], $Parts[0])
-        $Template[$Template.length - 1].setType()
+    $isString = $false
+
+    if (($script:stringOverrides | Where-Object { $Property.Path -match $_ }).Count -gt 0) {
+        $isString = $true
     }
-    $Test = $null
-    if ($Parts.Count -gt 1) {
-        foreach ($Index in (1..($Parts.Count - 1))) {
-            if ($Parts[$Index]) {
-                if ($Index -eq 1) {
-                    $Test = $Template | Where-Object { $_.Name -eq $Parts[$Index - 1] }
-                }
-                else {
-                    $Test = $Test.Properties | Where-Object { $_.Name -eq $Parts[$Index - 1] }
-                }
-                if (-not ($Test.Properties.Name -Contains $Parts[$Index])) {
-                    $Test.Properties += [JSONProperty]::New($Parts[$Index], ($Parts[0..$Index] -Join "/"))
-                    $Test.Properties[$Test.Properties.length - 1].setType()
-                }
-            }
+    else {
+        $LegalValues = $ImportedCSV.$Header | Where-Object { "" -ne $_ }
+        if ($LegalValues -match "^(?!.*(TRUE|FALSE))[^\d\W]") {
+            $isString = $true;
         }
     }
+
+    if ($isString) {
+        $isStringList.Add($Header) | Out-Null
+    }
     $Progress++
-    Write-Progress -Activity "Step 1 of 3: Building structure..." -Status "$Progress of $($Headers.Count) Properties" -PercentComplete ($Progress / $Headers.Count * 100)
+    Write-Progress -Activity "Step 1 of 3: Determining datatypes..." -Status "$Progress of $($Headers.Count) properties" -PercentComplete ($Progress / $Headers.Count * 100)
 }
 
-Write-Progress -Activity "Step 1 of 3: Building structure..." -PercentComplete 100 -Completed
+Write-Progress -Activity "Step 1 of 3: Determining datatypes..." -PercentComplete 100 -Completed
 Write-Host "Processed $Progress properties."
-
-$Objects = @()
 
 $Progress = 0
 
@@ -224,23 +202,31 @@ if ($First -eq 0) {
     $First = $ImportedCSV.Count
 }
 
+$Objects = [System.Collections.ArrayList]::new()
+
 Foreach ($Row in $ImportedCSV | Select-Object -First $First) {
     $Object = New-Object -TypeName PSObject
-    foreach ($Property in $Template) {
-        Add-Member -InputObject $Object -MemberType NoteProperty -Name $Property.Name -Value (New-Property $Row $Property)
-        if (($Property.Properties.Count -gt 0) -and ($Property.Properties[0].Name -Match "\d")) {
-            if (-not ($Object."$($Property.Name)" -is [array])) {
-                $Object."$($Property.Name)" = [array]@($Object."$($Property.Name)")
+    foreach ($Path in $Row.PSObject.Properties.Name | Where-Object { ($_ -eq $Split) -or ("" -ne $Row.$($_)) }) {
+        $Parts = $Path -Split "\/"
+        if ($Object.$($Parts[0])) {
+            $Object.$($Parts[0]) = (New-Property $Parts $Row $Object 0 $Path)
+        }
+        else {
+            Add-Member -InputObject $Object -MemberType NoteProperty -Name $Parts[0] -Value (New-Property $Parts $Row $Object 0 $Path) -Force
+        }
+        if ($Parts[1] -Match "^\d$") {
+            if (-not ($Object.$($Parts[0]) -is [System.Collections.ArrayList])) {
+                $Object.$($Parts[0]) = [System.Collections.ArrayList]@($Object.$($Parts[0]))
             }
         }
     }
-    $Objects += $Object
+    $Objects.add($Object) | Out-Null
     $Progress++
-    Write-Progress -Activity "Step 2 of 3: Converting entries..." -Status "$Progress of $($ImportedCSV.Count) Entries                                         " -PercentComplete ($Progress / $ImportedCSV.Count * 100)
+    Write-Progress -Activity "Step 2 of 3: Converting rows..." -Status "$Progress of $($ImportedCSV.Count) rows" -PercentComplete ($Progress / $ImportedCSV.Count * 100)
 }
 
-Write-Progress -Activity "Step 2 of 3: Converting entries..." -PercentComplete 100 -Completed
-Write-Host "Converted $Progress entries."
+Write-Progress -Activity "Step 2 of 3: Converting rows..." -PercentComplete 100 -Completed
+Write-Host "Converted $Progress rows."
 
 $Progress = 0
 
@@ -254,14 +240,18 @@ Write-Progress -Activity "Step 3 of 3: Cleaning up..." -PercentComplete 100 -Com
 Write-Host "Cleaned $Progress objects."
 
 if (-not $NoSort) {
-    if ($Objects.name -and $objects.level) {
-        $Objects = $Objects | Sort-Object -Property level, name
+    $Sorting = @()
+    if ($Objects.sortLevel) {
+        $Sorting += "sortLevel"
     }
-    elseif ($Objects.name) {
-        $Objects = $Objects | Sort-Object -Property name
+    if ($Objects.level) {
+        $Sorting += "level"
     }
-    elseif ($Objects.level) {
-        $Objects = $Objects | Sort-Object -Property level
+    if ($Objects.name) {
+        $Sorting += "name"
+    }
+    if ($Sorting.Count) {
+        $Objects = $Objects | Sort-Object -Property $Sorting
     }
 }
 

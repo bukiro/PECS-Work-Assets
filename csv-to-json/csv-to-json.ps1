@@ -8,8 +8,6 @@ Param (
     [switch]$NoSort
 )
 
-$InFile = "conditions.csv"
-
 if (-not ($OutFile)) {
     if ($Infile -ne "*") {
         $OutFile = $InFile -Replace "\.csv", ".json"
@@ -46,8 +44,6 @@ catch {
     Write-Host -ForegroundColor Red $_
     Exit 1
 }
-
-$ImportedCSV = $ImportedCSV |Where name -eq "Dragon Transformation"
 
 if ($Split) {
     if (($importedCSV.$Split | Where-Object { $_ }).Count -eq 0) {

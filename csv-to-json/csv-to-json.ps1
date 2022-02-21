@@ -1,11 +1,16 @@
 ﻿#Requires -Version 7
 #Json encoding doesn't match expectations in Powershell 5
+
+#The script cannot handle csv fields that start with a space and aren't enclosed in quotes.
+# Consider converting your xls file to csv with xls-to-csv.ps1, which adds quotes.
 Param (
     [string]$InFile = "*",
     [string]$OutFile = "",
     [string]$Split = "",
     [int]$First = 0,
-    [switch]$NoSort
+    [switch]$NoSort,
+    [switch]$Multithreaded,
+    [switch]$SkipQuoting
 )
 
 if (-not ($OutFile)) {
@@ -17,13 +22,16 @@ if (-not ($OutFile)) {
     }
 }
 
+$ScriptPath = $PSScriptRoot
+
 if ($InFile -eq "*") {
     Write-Host "No file given, using first file in input folder: "
-    $InFile = (Get-ChildItem "$($MyInvocation.MyCommand.Path.Replace('\csv-to-json.ps1', ''))\Input\" | Select-Object -First 1).Name
+    $InFile = (Get-ChildItem "$ScriptPath\Input\" | Select-Object -First 1).Name
 }
 
-$InPath = "$($MyInvocation.MyCommand.Path.Replace('\csv-to-json.ps1', ''))\Input\$InFile"
-$OutPath = "$($MyInvocation.MyCommand.Path.Replace('\csv-to-json.ps1', ''))\Output"
+$InPath = "$ScriptPath\Input\$InFile"
+$TempPath = "$ScriptPath\Temp\$InFile"
+$OutPath = "$ScriptPath\Output"
 
 $script:stringOverrides = @(
     "effects\/[\d]+\/value$",
@@ -35,99 +43,36 @@ $script:stringOverrides = @(
     "descs\/[\d]+\/value$"
 )
 
-$script:ImportedCSV = $()
-try {
-    $ImportedCSV = Import-CSV -Path $InPath
+$ImportedObjects = $()
+if (Test-Path $InPath) {
+    try {
+        if ($SkipQuoting) {
+            $ImportedObjects = Import-CSV $InPath
+        }
+        else {
+            #The following line is a regex hack that quotes every value in the csv that starts with a space, so that these values aren't trimmed in the import.
+            # As a side effect, already quoted values are double-quoted and need to be cleaned up again.
+            (Get-Content $InPath | Out-String ) -Replace '""', "[escapeddoublequotes]" -Replace '(\"[^\"]+\")|(?<=^|,)( [^,]+)', '$1"$2"' -Replace '\"+', '"' -Replace "\[escapeddoublequotes\]", '""' | Set-Content $TempPath
+            $ImportedObjects = Import-CSV $TempPath
+            Remove-Item $TempPath -Confirm:$false
+        }
+    }
+    catch {
+        Write-Host "CSV $InPath could not be imported."
+        Write-Host -ForegroundColor Red $_
+        Exit 1
+    } 
 }
-catch {
+else {
     Write-Host "CSV $InPath could not be imported."
-    Write-Host -ForegroundColor Red $_
+    Write-Host -ForegroundColor Red "File not found."
     Exit 1
 }
 
 if ($Split) {
-    if (($importedCSV.$Split | Where-Object { $_ }).Count -eq 0) {
+    if (($ImportedObjects.$Split | Where-Object { $_ }).Count -eq 0) {
         Write-Host "No row has the field '$Split' - content will not be split."
         $Split = ""
-    }
-}
-
-function Convert-DataType([string]$Value, [string]$Path) {
-    if ($isStringList -Contains $Path) {
-        return $value
-    }
-    elseif ($value -match "^-?\d+(\.\d+)$") {
-        return [convert]::ToDecimal($value)
-    }
-    elseif ($value -match "^-?\d+$") {
-        return [convert]::ToInt32($value)
-    }
-    elseif ($value -eq "TRUE") {
-        return $true
-    }
-    elseif ($Value -eq "FALSE") {
-        return $false   
-    }
-    else {
-        return $value
-    }
-}
-
-function New-Property($Parts, $Row, $Basis, $Current, $Path) {
-    $Next = $Current + 1
-    if ($Next -eq $Parts.Count) {
-        if ($Row.$Path -eq "Undead Creature Damage Resistance") {
-            $Test | Out-Null
-        }
-        return (Convert-DataType $Row.$Path $Path)
-    }
-    else {
-        if ($Parts[$Next] -match "^\d+$") {
-            if ($Basis.$($Parts[$Current])) {
-                $ArrayObject = [System.Collections.ArrayList]@($Basis.$($Parts[$Current]))
-            }
-            else {
-                $ArrayObject = ([System.Collections.ArrayList]::new())
-            }
-            if ($ArrayObject[$Parts[$Next]]) {
-                $ArrayObject[$Parts[$Next]] = (New-Property $Parts $Row $ArrayObject $Next $Path)
-            }
-            else {
-                While ($ArrayObject.Count -lt $Parts[$Next]) {
-                    $ArrayObject.Add("") | Out-Null
-                }
-                $ArrayObject.Add((New-Property $Parts $Row $ArrayObject $Next $Path)) | Out-Null
-            }
-            return $ArrayObject
-        }
-        else {
-            if ($Basis -is [System.Collections.ArrayList]) {
-                if ($Basis[$($Parts[$Current])]) {
-                    $SubObject = ($Basis[$($Parts[$Current])])
-                }
-                else {
-                    $SubObject = (New-Object PSObject)
-                }
-            }
-            elseif ($Basis.$($Parts[$Current])) {
-                $SubObject = ($Basis.$($Parts[$Current]))
-            }
-            else {
-                $SubObject = (New-Object PSObject)
-            }
-            if ($SubObject.$($Parts[$Next])) {
-                $SubObject.$($Parts[$Next]) = (New-Property $Parts $Row $SubObject $Next $Path)
-            }
-            else {
-                Add-Member -InputObject $SubObject -MemberType NoteProperty -Name $Parts[$Next] -Value (New-Property $Parts $Row $SubObject $Next $Path)
-            }
-            if ($Parts[$Next + 1] -and $Parts[$Next + 1] -match "^\d+$") {
-                if ($Parts[$Next] -isnot [System.Collections.ArrayList]) {
-                    $SubObject.$($Parts[$Next]) = [System.Collections.ArrayList]@($SubObject.$($Parts[$Next]))
-                }
-            }
-            return $SubObject
-        }
     }
 }
 
@@ -167,16 +112,21 @@ $Progress = 0
 
 $isStringList = [System.Collections.ArrayList]::new()
 
-$Headers = $ImportedCSV[0].PSObject.Properties.Name
+if ($First -eq 0) {
+    $First = $ImportedObjects.Count
+}
+
+$Headers = $ImportedObjects[0].PSObject.Properties.Name
 
 foreach ($Header in $Headers) {
     $isString = $false
 
-    if (($script:stringOverrides | Where-Object { $Property.Path -match $_ }).Count -gt 0) {
+    if (($script:stringOverrides | Where-Object { $Header -match $_ }).Count -gt 0) {
         $isString = $true
     }
-    else {
-        $LegalValues = $ImportedCSV.$Header | Where-Object { "" -ne $_ }
+
+    $LegalValues = (($ImportedObjects | Select-Object -First $First).$Header | Where-Object { "" -ne $_ })
+    if ($LegalValues.Count -gt 0) {
         if ($LegalValues -match "^(?!.*(TRUE|FALSE))[^\d\W]") {
             $isString = $true;
         }
@@ -185,6 +135,7 @@ foreach ($Header in $Headers) {
     if ($isString) {
         $isStringList.Add($Header) | Out-Null
     }
+    
     $Progress++
     Write-Progress -Activity "Step 1 of 3: Determining datatypes..." -Status "$Progress of $($Headers.Count) properties" -PercentComplete ($Progress / $Headers.Count * 100)
 }
@@ -192,37 +143,33 @@ foreach ($Header in $Headers) {
 Write-Progress -Activity "Step 1 of 3: Determining datatypes..." -PercentComplete 100 -Completed
 Write-Host "Processed $Progress properties."
 
-$Progress = 0
-
-if ($First -eq 0) {
-    $First = $ImportedCSV.Count
-}
-
-$Objects = [System.Collections.ArrayList]::new()
-
-Foreach ($Row in $ImportedCSV | Select-Object -First $First) {
-    $Object = New-Object -TypeName PSObject
-    foreach ($Path in $Row.PSObject.Properties.Name | Where-Object { ($_ -eq $Split) -or ("" -ne $Row.$($_)) }) {
-        $Parts = $Path -Split "\/"
-        if ($Object.$($Parts[0])) {
-            $Object.$($Parts[0]) = (New-Property $Parts $Row $Object 0 $Path)
-        }
-        else {
-            Add-Member -InputObject $Object -MemberType NoteProperty -Name $Parts[0] -Value (New-Property $Parts $Row $Object 0 $Path) -Force
-        }
-        if ($Parts[1] -Match "^\d$") {
-            if (-not ($Object.$($Parts[0]) -is [System.Collections.ArrayList])) {
-                $Object.$($Parts[0]) = [System.Collections.ArrayList]@($Object.$($Parts[0]))
-            }
-        }
+if ($Multithreaded) {
+    $Step = 10
+    $Jobs = for ($Processed = 0; $Processed -lt $First; $Processed += $Step) {
+        $ObjectBlock = @($ImportedObjects | Select-Object -First $Step -Skip $Processed)
+        Start-ThreadJob -ScriptBlock { & "$($using:ScriptPath)\convert-rows.ps1" -ObjectBlock $using:ObjectBlock -isStringList $using:isStringList -Split $using:Split -SuppressProgress } -ThrottleLimit 100
     }
-    $Objects.add($Object) | Out-Null
-    $Progress++
-    Write-Progress -Activity "Step 2 of 3: Converting rows..." -Status "$Progress of $($ImportedCSV.Count) rows" -PercentComplete ($Progress / $ImportedCSV.Count * 100)
+    Write-Host "Started $($Jobs.Count) conversion threads."
+    $JobsTotal = $Jobs.Count
+    While ($Jobs | Where-Object State -ne "Completed") {
+        $Progress = ($Jobs | Where-Object State -eq "Completed").Count
+        $Running = ($Jobs | Where-Object State -eq "Running").Count
+        Write-Progress -Activity "Step 2 of 3: Converting rows..." -CurrentOperation "Running Jobs" -Status "$Progress of $JobsTotal jobs completed ($Running running)" -PercentComplete ($Progress / $JobsTotal)
+        Start-Sleep -Milliseconds 100
+    }
+    $Jobs | Wait-Job | Out-Null
+    $Objects = @()
+    $Jobs | Foreach-Object {
+        $Objects += Receive-Job $_
+    }
+    $Jobs | Remove-Job
+}
+else {
+    $Objects = & "$ScriptPath\convert-rows.ps1" -ObjectBlock ($ImportedObjects | Select-Object -First $First) -isStringList $isStringList -Split $Split
 }
 
 Write-Progress -Activity "Step 2 of 3: Converting rows..." -PercentComplete 100 -Completed
-Write-Host "Converted $Progress rows."
+Write-Host "Converted $($Objects.Count) rows."
 
 $Progress = 0
 
@@ -251,28 +198,33 @@ if (-not $NoSort) {
     }
 }
 
-if ($Split) {
-    $invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
-    $re = "[{0}]" -f [RegEx]::Escape($invalidChars)
-    foreach ($Variation in ($Objects.$Split | Select-Object -Unique)) {
-        if ($Variation -eq "") {
-            $Path = "Other"
+if ($Objects.Count) {
+    if ($Split) {
+        $invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
+        $re = "[{0}]" -f [RegEx]::Escape($invalidChars)
+        foreach ($Variation in ($Objects.$Split | Select-Object -Unique)) {
+            if ($Variation -eq "") {
+                $Path = "Other"
+            }
+            else {
+                $Path = ($Variation -replace $re)
+            }
+            $ExportedObjects = $Objects | Where-Object { $_.$Split -eq $Variation }
+            if ($ExportedObjects.name) {
+                $ExportedObjects = $ExportedObjects | Sort-Object -Property "name"
+            }
+            if ($ExportedObjects.level) {
+                $ExportedObjects = $ExportedObjects | Sort-Object -Property "level"
+            }
+            ($ExportedObjects | ConvertTo-JSON -Depth 100 -AsArray).Replace("\r\n", "\n") | Set-Content "$OutPath\$Path.json"
+            Write-Host "Exported $(@($ExportedObjects).Count) entries to $Path.json"
         }
-        else {
-            $Path = ($Variation -replace $re)
-        }
-        $ExportedObjects = $Objects | Where-Object { $_.$Split -eq $Variation }
-        if ($ExportedObjects.name) {
-            $ExportedObjects = $ExportedObjects | Sort-Object -Property "name"
-        }
-        if ($ExportedObjects.level) {
-            $ExportedObjects = $ExportedObjects | Sort-Object -Property "level"
-        }
-        ($ExportedObjects | ConvertTo-JSON -Depth 100 -AsArray).Replace("\r\n", "\n") | Set-Content "$OutPath\$Path.json"
-        Write-Host "Exported $(@($ExportedObjects).Count) entries to $Path.json"
+    }
+    else {
+        ($Objects | ConvertTo-JSON -Depth 100 -AsArray).Replace("\r\n", "\n") | Set-Content "$OutPath\$OutFile"
+        Write-Host "Exported $(@($Objects).Count) entries to $OutFile"
     }
 }
 else {
-    ($Objects | ConvertTo-JSON -Depth 100 -AsArray).Replace("\r\n", "\n") | Set-Content "$OutPath\$OutFile"
-    Write-Host "Exported $(@($Objects).Count) entries to $OutFile"
+    Write-Host "No content was generated."
 }

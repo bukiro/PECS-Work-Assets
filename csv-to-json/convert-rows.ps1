@@ -30,58 +30,49 @@ function Convert-DataType([string]$Value, [string]$Path) {
     }
 }
 
-function New-Property($Parts, $Row, $Basis, $Current, $Path) {
-    $Next = $Current + 1
-    if ($Next -eq $Parts.Count) {
-        return (Convert-DataType $Row.$Path $Path)
+function New-ConvertedObject([psObject]$Row, [string[]]$List, [string]$Path) {
+    if ($Row.$Path) {
+        return Convert-DataType -Value $Row.$Path -Path $Path
+    }
+    $BaseHeaders = $List | ForEach-Object { ($_ -Split "/")[0] } | Select-Object -Unique
+    if ($BaseHeaders -Match "^\d+$") {
+        $ArrayObject = [System.Collections.ArrayList]::new()
+        $isArray = $true
     }
     else {
-        if ($Parts[$Next] -match "^\d+$") {
-            if ($Basis.$($Parts[$Current])) {
-                $ArrayObject = [System.Collections.ArrayList]@($Basis.$($Parts[$Current]))
-            }
-            else {
-                $ArrayObject = ([System.Collections.ArrayList]::new())
-            }
-            if ($ArrayObject[$Parts[$Next]]) {
-                $ArrayObject[$Parts[$Next]] = (New-Property $Parts $Row $ArrayObject $Next $Path)
-            }
-            else {
-                While ($ArrayObject.Count -lt $Parts[$Next]) {
-                    $ArrayObject.Add("") | Out-Null
-                }
-                $ArrayObject.Add((New-Property $Parts $Row $ArrayObject $Next $Path)) | Out-Null
-            }
-            return $ArrayObject
+        $Object = New-Object psobject
+        $isArray = $false
+    }
+    Foreach ($BaseHeader in $BaseHeaders) {
+        if ($Path) {
+            $NewPath = "$Path/$BaseHeader"
         }
         else {
-            if ($Basis -is [System.Collections.ArrayList]) {
-                if ($Basis[$($Parts[$Current])]) {
-                    $SubObject = ($Basis[$($Parts[$Current])])
-                }
-                else {
-                    $SubObject = (New-Object PSObject)
-                }
-            }
-            elseif ($Basis.$($Parts[$Current])) {
-                $SubObject = ($Basis.$($Parts[$Current]))
-            }
-            else {
-                $SubObject = (New-Object PSObject)
-            }
-            if ($SubObject.$($Parts[$Next])) {
-                $SubObject.$($Parts[$Next]) = (New-Property $Parts $Row $SubObject $Next $Path)
-            }
-            else {
-                Add-Member -InputObject $SubObject -MemberType NoteProperty -Name $Parts[$Next] -Value (New-Property $Parts $Row $SubObject $Next $Path)
-            }
-            if ($Parts[$Next + 1] -and $Parts[$Next + 1] -match "^\d+$") {
-                if ($Parts[$Next] -isnot [System.Collections.ArrayList]) {
-                    $SubObject.$($Parts[$Next]) = [System.Collections.ArrayList]@($SubObject.$($Parts[$Next]))
-                }
-            }
-            return $SubObject
+            $NewPath = $BaseHeader
         }
+        if ($BaseHeader -eq "hints") {
+            $Stop|Out-Null
+        }
+        $SubHeaders = @($List | Where-Object { $_ -Like "$BaseHeader/*" }) -Replace "^$BaseHeader/", ""
+        $Value = New-ConvertedObject -Row $Row -List $SubHeaders -Path $NewPath
+        if ($isArray) {
+            $ArrayObject.Add($Value) | Out-Null
+            if (($SubHeaders | ForEach-Object { ($_ -Split "/")[0] }) -Match "^\d+$") {
+                $ArrayObject[-1] = [System.Collections.ArrayList]@($ArrayObject[-1])
+            }
+        }
+        else {
+            Add-Member -InputObject $Object -MemberType NoteProperty -Name $BaseHeader -Value $Value
+            if (($SubHeaders | ForEach-Object { ($_ -Split "/")[0] }) -Match "^\d+$") {
+                $Object.$BaseHeader = [System.Collections.ArrayList]@($Object.$BaseHeader)
+            }
+        }
+    }
+    if ($isArray) {
+        return $ArrayObject
+    }
+    else {
+        return $Object
     }
 }
 
@@ -90,21 +81,8 @@ $Progress = 0
 $Objects = [System.Collections.ArrayList]::New()
 
 Foreach ($Row in $ObjectBlock) {
-    $Object = New-Object -TypeName PSObject
-    foreach ($Path in $Row.PSObject.Properties.Name | Where-Object { (("" -ne $Split) -and ($_ -eq $Split)) -or ("" -ne $Row.$($_)) }) {
-        $Parts = $Path -Split "\/"
-        if ($Object.$($Parts[0])) {
-            $Object.$($Parts[0]) = (New-Property $Parts $Row $Object 0 $Path)
-        }
-        else {
-            Add-Member -InputObject $Object -MemberType NoteProperty -Name $Parts[0] -Value (New-Property $Parts $Row $Object 0 $Path) -Force
-        }
-        if ($Parts[1] -Match "^\d$") {
-            if (-not ($Object.$($Parts[0]) -is [System.Collections.ArrayList])) {
-                $Object.$($Parts[0]) = [System.Collections.ArrayList]@($Object.$($Parts[0]))
-            }
-        }
-    }
+    $Headers = $Row.psObject.Properties.Name | Where-Object { "" -ne $Row.$_ }
+    $Object = New-ConvertedObject -Row $Row -List $Headers -Path ""
     $Objects.add($Object) | Out-Null
     $Progress++
     if (-not $SuppressProgress) {

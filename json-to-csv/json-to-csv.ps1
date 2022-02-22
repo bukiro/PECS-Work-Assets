@@ -5,49 +5,60 @@ Param (
     [int]$First = 0
 )
 
-$BaseProperties = @(
-    "name",
-    "displayName",
-    "id",
-    "desc",
-    "type",
-    "_extensionFileName",
-    "sourceBook",
-    "level",
-    "levelreq",
-    "levelReq",
-    "bulk"
-    "price",
-    "access",
-    "PFSnote"
-    "subType",
-    "subTypeDesc"
-    "hide",
-    "traits/0",
-    "traits/1",
-    "traits/2",
-    "traits/3",
-    "traits/4",
-    "traits/5",
-    "traits/6",
-    "traits/7",
-    "traits/8",
-    "traits/9",
-    "traits/10",
-    "traits/11",
-    "traits/12",
-    "traits/13",
-    "traits/14",
-    "traits/15",
-    "traits/16",
-    "traits/17",
-    "traits/18",
-    "traits/19",
-    "traits/20"
-)
+$BaseProperties = [System.Collections.ArrayList]::New(@(
+        "name",
+        "displayName",
+        "id",
+        "type",
+        "desc",
+        "_extensionFileName",
+        "sourceBook",
+        "level",
+        "sortLevel",
+        "levelreq",
+        "levelReq",
+        "bulk",
+        "price",
+        "access",
+        "PFSnote",
+        "subType",
+        "subTypeDesc",
+        "hide",
+        "critSuccess",
+        "success",
+        "failure",
+        "critFailure",
+        "traits/0",
+        "traits/1",
+        "traits/2",
+        "traits/3",
+        "traits/4",
+        "traits/5",
+        "traits/6",
+        "traits/7",
+        "traits/8",
+        "traits/9",
+        "traits/10",
+        "traits/11",
+        "traits/12",
+        "traits/13",
+        "traits/14",
+        "traits/15",
+        "traits/16",
+        "traits/17",
+        "traits/18",
+        "traits/19",
+        "traits/20"
+    ))
 
-$InPath = "$($MyInvocation.MyCommand.Path.Replace('\json-to-csv.ps1', ''))\Input\$InFile"
-$OutPath = "$($MyInvocation.MyCommand.Path.Replace('\json-to-csv.ps1', ''))\Output\$OutFile"
+if ($InFile) {
+    $OutFile = $InFile -Replace "\.json$", ".csv"
+}
+
+$ScriptPath = $PSScriptRoot
+
+$InPath = "$PSScriptRoot\Input\$InFile"
+$OutPath = "$PSScriptRoot\Output\$OutFile"
 
 $objects = @()
 
@@ -105,26 +116,11 @@ foreach ($Object in ($Objects | Select-Object -First $First)) {
     }
     $ConvertedObjects += $convertedObject
     $Progress++
-    Write-Progress -Activity "Step 1 of 2: Flattening properties..." -Status "$Progress of $($Objects.Count) Objects" -PercentComplete ($Progress / $Objects.Count * 100)
+    Write-Progress -Activity "Flattening properties..." -Status "$Progress of $($Objects.Count) Objects" -PercentComplete ($Progress / $Objects.Count * 100)
 }
 
-Write-Progress -Activity "Step 1 of 2: Flattening properties..." -PercentComplete 100 -Completed
+Write-Progress -Activity "Flattening properties..." -PercentComplete 100 -Completed
 Write-Host "Wrote $($PropertyList.Count) properties on $Progress objects."
-
-$Progress = 0
-
-foreach ($ConvertedObject in $ConvertedObjects | Select-Object -First $First) {
-    foreach ($Property in $PropertyList) {
-        if ($null -eq $ConvertedObject.$Property) {
-            Add-Member -InputObject $ConvertedObject -MemberType NoteProperty -name $Property -Value ""
-        }
-    }
-    $Progress++
-    Write-Progress -Activity "Step 2 of 2: Adding unused properties..." -Status "$Progress of $($ConvertedObjects.Count) Objects" -PercentComplete ($Progress / $Objects.Count * 100)
-}
-
-Write-Progress -Activity "Step 1 of 2: Adding unused properties..." -PercentComplete 100 -Completed
-Write-Host "Added unused properties on $Progress objects."
 
 $SortedProperties = @()
 $BaseProperties | ForEach-Object {
@@ -132,6 +128,7 @@ $BaseProperties | ForEach-Object {
         $SortedProperties += $_
     }
 }
+$SortedProperties += $PropertyList | Sort-Object | WHere-Object { -not ($_ -like "*/*") } 
 $SortedProperties += ($PropertyList | Sort-Object)
 $SortedProperties = $SortedProperties | Select-Object -Unique
 

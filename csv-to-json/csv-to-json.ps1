@@ -1,8 +1,6 @@
 ﻿#Requires -Version 7
 #Json encoding doesn't match expectations in Powershell 5
 
-#The script cannot handle csv fields that start with a space and aren't enclosed in quotes.
-# Consider converting your xls file to csv with xls-to-csv.ps1, which adds quotes.
 Param (
     [string]$InFile = "*",
     [string]$OutFile = "",
@@ -51,7 +49,7 @@ if (Test-Path $InPath) {
         }
         else {
             #The following line is a regex hack that quotes every value in the csv that starts with a space, so that these values aren't trimmed in the import.
-            # As a side effect, already quoted values are double-quoted and need to be cleaned up again.
+            # As a side effect, already quoted values are double-quoted and need to be cleaned up again. Previously existing double quotes are preserved by replacing them for the process and reverting them after.
             (Get-Content $InPath | Out-String ) -Replace '""', "[escapeddoublequotes]" -Replace '(\"[^\"]+\")|(?<=^|,)( [^,]+)', '$1"$2"' -Replace '\"+', '"' -Replace "\[escapeddoublequotes\]", '""' | Set-Content $TempPath
             $ImportedObjects = Import-CSV $TempPath
             Remove-Item $TempPath -Confirm:$false
@@ -147,7 +145,7 @@ if ($Multithreaded) {
     $Step = 10
     $Jobs = for ($Processed = 0; $Processed -lt $First; $Processed += $Step) {
         $ObjectBlock = @($ImportedObjects | Select-Object -First $Step -Skip $Processed)
-        Start-ThreadJob -ScriptBlock { & "$($using:ScriptPath)\convert-rows.ps1" -ObjectBlock $using:ObjectBlock -isStringList $using:isStringList -Split $using:Split -SuppressProgress } -ThrottleLimit 100
+        Start-ThreadJob -ScriptBlock { & "$($using:ScriptPath)\convert-rows.ps1" -ObjectBlock $using:ObjectBlock -isStringList $using:isStringList -Split $using:Split -SuppressProgress } -ThrottleLimit 10
     }
     Write-Host "Started $($Jobs.Count) conversion threads."
     $JobsTotal = $Jobs.Count
@@ -186,6 +184,9 @@ if (-not $NoSort) {
     $Sorting = @()
     if ($Objects.sortLevel) {
         $Sorting += "sortLevel"
+    }
+    if ($Objects.type) {
+        $Sorting += "type"
     }
     if ($Objects.level) {
         $Sorting += "level"

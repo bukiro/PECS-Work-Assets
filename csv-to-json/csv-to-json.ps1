@@ -7,7 +7,7 @@ Param (
     [string]$Split = "",
     [int]$First = 0,
     [switch]$NoSort,
-    [switch]$Multithreaded,
+    [switch]$ForceSingleThread,
     [switch]$SkipQuoting
 )
 
@@ -114,6 +114,8 @@ if ($First -eq 0) {
     $First = $ImportedObjects.Count
 }
 
+$Multithreaded = (($First -gt 100) -and (-not $ForceSingleThread))
+
 $Headers = $ImportedObjects[0].PSObject.Properties.Name
 
 foreach ($Header in $Headers) {
@@ -201,6 +203,18 @@ if (-not $NoSort) {
 
 if ($Objects.Count) {
     if ($Split) {
+        Foreach ($Object in $Objects) {
+            $ObjectSplit = $Object.$Split
+            if (-not $ObjectSplit) {
+                $ObjectSplit = "other"
+            }
+            if ($Object.PSObject.Properties.Name -Contains "_extensionFileName") {
+                $Object."_extensionFileName" = $ObjectSplit
+            }
+            else {
+                Add-Member -InputObject $Object -MemberType NoteProperty -Name "_extensionFileName" -Value $ObjectSplit
+            }
+        }
         $invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
         $re = "[{0}]" -f [RegEx]::Escape($invalidChars)
         foreach ($Variation in ($Objects.$Split | Select-Object -Unique)) {

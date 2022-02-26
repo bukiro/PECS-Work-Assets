@@ -1,4 +1,4 @@
-﻿#Requires -Version 7
+#Requires -Version 7
 #Json encoding doesn't match expectations in Powershell 5
 Param (
     [PSObject[]]$ObjectBlock,

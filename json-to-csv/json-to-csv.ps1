@@ -14,9 +14,10 @@ $BaseProperties = [System.Collections.ArrayList]::New(@(
         "_extensionFileName",
         "sourceBook",
         "level",
-        "sortLevel",
+        "minLevel",
         "levelreq",
         "levelReq",
+        "sortLevel",
         "bulk",
         "price",
         "access",
@@ -57,8 +58,8 @@ if ($InFile) {
 
 $ScriptPath = $PSScriptRoot
 
-$InPath = "$PSScriptRoot\Input\$InFile"
-$OutPath = "$PSScriptRoot\Output\$OutFile"
+$InPath = "$ScriptPath\Input\$InFile"
+$OutPath = "$ScriptPath\Output\$OutFile"
 
 $objects = @()
 

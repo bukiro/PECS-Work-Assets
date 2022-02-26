@@ -1,4 +1,4 @@
-﻿#Requires -Version 7
+#Requires -Version 7
 #Json encoding doesn't match expectations in Powershell 5
 
 Param (
@@ -6,7 +6,7 @@ Param (
     [string]$OutFile = "",
     [string]$Split = "",
     [int]$First = 0,
-    [switch]$NoSort,
+    [switch]$Sort,
     [switch]$ForceSingleThread,
     [switch]$SkipQuoting
 )
@@ -182,7 +182,7 @@ Foreach ($Object in $Objects) {
 Write-Progress -Activity "Step 3 of 3: Cleaning up..." -PercentComplete 100 -Completed
 Write-Host "Cleaned $Progress objects."
 
-if (-not $NoSort) {
+if ($Sort) {
     $Sorting = @()
     if ($Objects.sortLevel) {
         $Sorting += "sortLevel"
@@ -225,12 +225,6 @@ if ($Objects.Count) {
                 $Path = ($Variation -replace $re)
             }
             $ExportedObjects = $Objects | Where-Object { $_.$Split -eq $Variation }
-            if ($ExportedObjects.name) {
-                $ExportedObjects = $ExportedObjects | Sort-Object -Property "name"
-            }
-            if ($ExportedObjects.level) {
-                $ExportedObjects = $ExportedObjects | Sort-Object -Property "level"
-            }
             ($ExportedObjects | ConvertTo-JSON -Depth 100 -AsArray).Replace("\r\n", "\n") | Set-Content "$OutPath\$Path.json"
             Write-Host "Exported $(@($ExportedObjects).Count) entries to $Path.json"
         }

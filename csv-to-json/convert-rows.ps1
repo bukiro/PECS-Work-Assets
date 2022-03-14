@@ -3,15 +3,23 @@
 Param (
     [PSObject[]]$ObjectBlock,
     [string[]]$isStringList,
+    [string[]]$isDynamicValueList,
     [string]$Split,
     [switch]$SuppressProgress
 )
 
 $script:isStringList = $isStringList
+$script:isDynamicValueList = $isDynamicValueList
 
 function Convert-DataType([string]$Value, [string]$Path) {
-    if ($Script:isStringList -Contains $Path) {
-        return $value
+    if (($Script:isStringList -Contains $Path) -and -not ($isDynamicValueList -Contains $Path)) {
+        if ("TRUE" -eq $value) {
+            return "true"
+        } elseif ("FALSE" -eq $value) {
+            return "false"
+        } else {
+            return $value
+        }
     }
     elseif ($value -match "^-?\d+(\.\d+)$") {
         return [convert]::ToDecimal($value)
@@ -31,7 +39,7 @@ function Convert-DataType([string]$Value, [string]$Path) {
 }
 
 function New-ConvertedObject([psObject]$Row, [string[]]$List, [string]$Path) {
-    if ($Row.$Path) {
+    if ($null -ne $Row.$Path) {
         return Convert-DataType -Value $Row.$Path -Path $Path
     }
     $BaseHeaders = $List | ForEach-Object { ($_ -Split "/")[0] } | Select-Object -Unique

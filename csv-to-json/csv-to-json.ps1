@@ -38,7 +38,12 @@ $script:stringOverrides = @(
     "^bulk$",
     "gainSpells\/[\d]+\/dynamicLevel$",
     "\/[\d]+\/0/dynamicEffectiveSpellLevel$",
-    "descs\/[\d]+\/value$"
+    "descs\/[\d]+\/value$",
+    "^specialreq$"
+)
+
+$script:dynamicValueOverrides = @(
+    "data\/[\d]+\/value$"
 )
 
 $ImportedObjects = $()
@@ -85,7 +90,8 @@ function Update-Property($Object) {
                     }
                 } 
             }
-            $Object.$Property = $Object.$Property | Where-Object { $_ -ne "" }
+            #Reverse comparison to avoid (0 -eq "") being true.
+            $Object.$Property = $Object.$Property | Where-Object { "" -ne $_ }
             if ($Object.$Property.Count -eq 0) {
                 $Object.PSObject.Properties.Remove($Property)
             }
@@ -109,6 +115,7 @@ function Update-Property($Object) {
 $Progress = 0
 
 $isStringList = [System.Collections.ArrayList]::new()
+$isDynamicValueList = [System.Collections.ArrayList]::new();
 
 if ($First -eq 0) {
     $First = $ImportedObjects.Count
@@ -121,19 +128,24 @@ $Headers = $ImportedObjects[0].PSObject.Properties.Name
 foreach ($Header in $Headers) {
     $isString = $false
 
-    if (($script:stringOverrides | Where-Object { $Header -match $_ }).Count -gt 0) {
-        $isString = $true
+    if (($script:dynamicValueOverrides | Where-Object { $Header -match $_ }).Count -gt 0) {
+        $isDynamicValueList.Add($Header) | Out-Null
     }
-
-    $LegalValues = (($ImportedObjects | Select-Object -First $First).$Header | Where-Object { "" -ne $_ })
-    if ($LegalValues.Count -gt 0) {
-        if ($LegalValues -match "^(?!.*(TRUE|FALSE))[^\d\W]") {
-            $isString = $true;
+    else {
+        if (($script:stringOverrides | Where-Object { $Header -match $_ }).Count -gt 0) {
+            $isString = $true
         }
-    }
+    
+        $LegalValues = (($ImportedObjects | Select-Object -First $First).$Header | Where-Object { "" -ne $_ })
+        if ($LegalValues.Count -gt 0) {
+            if ($LegalValues -match "^(?!.*(TRUE|FALSE))[^\d\W]") {
+                $isString = $true;
+            }
+        }
 
-    if ($isString) {
-        $isStringList.Add($Header) | Out-Null
+        if ($isString) {
+            $isStringList.Add($Header) | Out-Null
+        }
     }
     
     $Progress++
@@ -147,7 +159,7 @@ if ($Multithreaded) {
     $Step = 10
     $Jobs = for ($Processed = 0; $Processed -lt $First; $Processed += $Step) {
         $ObjectBlock = @($ImportedObjects | Select-Object -First $Step -Skip $Processed)
-        Start-ThreadJob -ScriptBlock { & "$($using:ScriptPath)\convert-rows.ps1" -ObjectBlock $using:ObjectBlock -isStringList $using:isStringList -Split $using:Split -SuppressProgress } -ThrottleLimit 10
+        Start-ThreadJob -ScriptBlock { & "$($using:ScriptPath)\convert-rows.ps1" -ObjectBlock $using:ObjectBlock -isStringList $using:isStringList -isDynamicValueList $using:isDynamicValueList -Split $using:Split -SuppressProgress } -ThrottleLimit 10
     }
     Write-Host "Started $($Jobs.Count) conversion threads."
     $JobsTotal = $Jobs.Count
@@ -165,7 +177,7 @@ if ($Multithreaded) {
     $Jobs | Remove-Job
 }
 else {
-    $Objects = & "$ScriptPath\convert-rows.ps1" -ObjectBlock ($ImportedObjects | Select-Object -First $First) -isStringList $isStringList -Split $Split
+    $Objects = & "$ScriptPath\convert-rows.ps1" -ObjectBlock ($ImportedObjects | Select-Object -First $First) -isStringList $isStringList -isDynamicValueList $using:isDynamicValueList -Split $Split
 }
 
 Write-Progress -Activity "Step 2 of 3: Converting rows..." -PercentComplete 100 -Completed
@@ -192,6 +204,9 @@ if ($Sort) {
     }
     if ($Objects.level) {
         $Sorting += "level"
+    }
+    if ($Objects.levelReq) {
+        $Sorting += "levelReq"
     }
     if ($Objects.name) {
         $Sorting += "name"

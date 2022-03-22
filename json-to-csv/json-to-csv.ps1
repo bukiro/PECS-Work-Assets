@@ -24,6 +24,8 @@ $BaseProperties = [System.Collections.ArrayList]::New(@(
         "PFSnote",
         "subType",
         "subTypeDesc",
+        "subTypes",
+        "superType",
         "hide",
         "critSuccess",
         "success",
@@ -57,6 +59,8 @@ if ($InFile) {
 }
 
 $ScriptPath = $PSScriptRoot
+
+. $ScriptPath\Sort-STNumerical.ps1
 
 $InPath = "$ScriptPath\Input\$InFile"
 $OutPath = "$ScriptPath\Output\$OutFile"
@@ -129,8 +133,8 @@ $BaseProperties | ForEach-Object {
         $SortedProperties += $_
     }
 }
-$SortedProperties += $PropertyList | Sort-Object | WHere-Object { -not ($_ -like "*/*") } 
-$SortedProperties += ($PropertyList | Sort-Object)
+$SortedProperties += $PropertyList | Sort-Object | Where-Object { -not ($_ -like "*/*") } 
+$SortedProperties += ($PropertyList | Sort-STNumerical)
 $SortedProperties = $SortedProperties | Select-Object -Unique
 
 $ConvertedObjects | Select-Object $SortedProperties | Export-CSV -NoTypeInformation $OutPath

@@ -121,8 +121,6 @@ if ($First -eq 0) {
     $First = $ImportedObjects.Count
 }
 
-$Multithreaded = (($First -gt 100) -and (-not $ForceSingleThread))
-
 $Headers = $ImportedObjects[0].PSObject.Properties.Name
 
 foreach ($Header in $Headers) {
@@ -155,6 +153,8 @@ foreach ($Header in $Headers) {
 Write-Progress -Activity "Step 1 of 3: Determining datatypes..." -PercentComplete 100 -Completed
 Write-Host "Processed $Progress properties."
 
+$Multithreaded = ((($First -gt 100) -or ($Progress -gt 1000)) -and(-not $ForceSingleThread))
+
 if ($Multithreaded) {
     $Step = 10
     $Jobs = for ($Processed = 0; $Processed -lt $First; $Processed += $Step) {
@@ -177,7 +177,7 @@ if ($Multithreaded) {
     $Jobs | Remove-Job
 }
 else {
-    $Objects = & "$ScriptPath\convert-rows.ps1" -ObjectBlock ($ImportedObjects | Select-Object -First $First) -isStringList $isStringList -isDynamicValueList $using:isDynamicValueList -Split $Split
+    $Objects = & "$ScriptPath\convert-rows.ps1" -ObjectBlock ($ImportedObjects | Select-Object -First $First) -isStringList $isStringList -isDynamicValueList $isDynamicValueList -Split $Split
 }
 
 Write-Progress -Activity "Step 2 of 3: Converting rows..." -PercentComplete 100 -Completed

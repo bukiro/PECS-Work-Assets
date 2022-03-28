@@ -124,22 +124,22 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- Implement all Worn Items (Core Rulebook)
+- Make all search boxes able to search by source book
 
 Implement:
 - Cache system to prevent re-calculating complicated values if nothing has changed
-- Plane Shift
-- True Seeing
-- Spell Turning
+- "When a character creates consumable items, they can make them in batches of four."
 
 Test:
 
 Bugs:
-- Status popovers (broken, shoddy, etc.) on items are broken in mobile mode and tile mode, not displaying and turning off and on in the html
 
 Next steps:
+- Group all json content by source book
+- Use eslint
+- Use strict templates
+- Create Modal directive that allows modals that don't close when clicking outside
 - Improve inventory html with InventoryParameters & ItemParameters
-- Verify OGL license entries for all worn items
 - Apply errata if needed
 - Set IconValueOverride for items with multiple subtypes and for items with subtype "Type *"
 - Add options to resting: Duration, whether to tick once per day things...
@@ -156,4 +156,4 @@ Next steps:
 - Implement Conditions for Poisons
 - Champion
 - Alchemist
-- Implement better graphical item creation tool
+- Create better (graphical) item creation tool

@@ -5,8 +5,8 @@ Before exports, replace all these characters in Excel:
 ’ => '
 “ => "
 ” => "
-With spaces (but without brackets):
-— => ( - )
+— =>  - 
+(with spaces)
 
 # New Method using Powershell
 

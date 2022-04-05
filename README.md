@@ -124,7 +124,6 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- Make all search boxes able to search by source book
 
 Implement:
 - Cache system to prevent re-calculating complicated values if nothing has changed
@@ -135,7 +134,6 @@ Test:
 Bugs:
 
 Next steps:
-- Group all json content by source book
 - Use eslint
 - Use strict templates
 - Create Modal directive that allows modals that don't close when clicking outside

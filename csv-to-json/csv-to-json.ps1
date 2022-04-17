@@ -86,12 +86,12 @@ function Update-Property($Object) {
                 if ($Object.$Property[$Index] -is [psobject]) {
                     Update-Property $Object.$Property[$Index]
                     if (-not @($Object.$Property[$Index].PSObject.Properties.Count)) {
-                        $Object.$Property[$Index] = ""
+                        $Object.$Property[$Index] = $null
                     }
                 } 
             }
-            #Reverse comparison to avoid (0 -eq "") being true.
-            $Object.$Property = $Object.$Property | Where-Object { "" -ne $_ }
+            #Reverse comparison to avoid (0 -eq $null) being true.
+            $Object.$Property = $Object.$Property | Where-Object { $null -ne $_ }
             if ($Object.$Property.Count -eq 0) {
                 $Object.PSObject.Properties.Remove($Property)
             }
@@ -105,8 +105,8 @@ function Update-Property($Object) {
                 $Object.PSObject.Properties.Remove($Property)
             }
         }
-        #Reverse comparison to avoid (0 -eq "") being true.
-        elseif (("" -eq $Object.$Property) -and ($Property -ne $Split)) {
+        #Reverse comparison to avoid (0 -eq $null) being true.
+        elseif (($null -eq $Object.$Property) -and ($Property -ne $Split)) {
             $Object.PSObject.Properties.Remove($Property)
         }
     }
@@ -153,7 +153,7 @@ foreach ($Header in $Headers) {
 Write-Progress -Activity "Step 1 of 3: Determining datatypes..." -PercentComplete 100 -Completed
 Write-Host "Processed $Progress properties."
 
-$Multithreaded = ((($First -gt 100) -or ($Progress -gt 1000)) -and(-not $ForceSingleThread))
+$Multithreaded = ((($First -gt 100) -or ($Progress -gt 1000)) -and (-not $ForceSingleThread))
 
 if ($Multithreaded) {
     $Step = 10
@@ -233,7 +233,7 @@ if ($Objects.Count) {
         $invalidChars = [IO.Path]::GetInvalidFileNameChars() -join ''
         $re = "[{0}]" -f [RegEx]::Escape($invalidChars)
         foreach ($Variation in ($Objects.$Split | Select-Object -Unique)) {
-            if ($Variation -eq "") {
+            if ("" -eq $Variation) {
                 $Path = "Other"
             }
             else {

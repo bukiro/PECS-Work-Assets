@@ -88,7 +88,13 @@ $ConvertedObjects = @()
 
 function Set-Property([PSObject]$ConvertedObject, [PSObject]$Property, [string]$path) {
     #Reverse comparison to avoid (0 -eq "") being true.
-    if (("" -ne $Property) -or ($property -isnot [string])) {
+    if (($property -is [string]) -and ("" -eq $Property)) {
+        Add-Member -InputObject $ConvertedObject -MemberType NoteProperty -name $Path -Value "-"
+        if (-not ($PropertyList -contains $Path)) {
+            $propertyList.Add($Path) | Out-Null
+        }
+    }
+    else {
         if ($Property -is [array]) {
             foreach ($Index in (0..($Property.count - 1))) {
                 Set-Property $ConvertedObject $Property[$Index] "$path/$Index"

@@ -12,12 +12,17 @@ $script:isStringList = $isStringList
 $script:isDynamicValueList = $isDynamicValueList
 
 function Convert-DataType([string]$Value, [string]$Path) {
-    if (($Script:isStringList -Contains $Path) -and -not ($isDynamicValueList -Contains $Path)) {
+    if ($value -eq "-") {
+        return ""
+    }
+    elseif (($Script:isStringList -Contains $Path) -and -not ($isDynamicValueList -Contains $Path)) {
         if ("TRUE" -eq $value) {
             return "true"
-        } elseif ("FALSE" -eq $value) {
+        }
+        elseif ("FALSE" -eq $value) {
             return "false"
-        } else {
+        }
+        else {
             return $value
         }
     }
@@ -57,9 +62,6 @@ function New-ConvertedObject([psObject]$Row, [string[]]$List, [string]$Path) {
         }
         else {
             $NewPath = $BaseHeader
-        }
-        if ($BaseHeader -eq "hints") {
-            $Stop|Out-Null
         }
         $SubHeaders = @($List | Where-Object { $_ -Like "$BaseHeader/*" }) -Replace "^$BaseHeader/", ""
         $Value = New-ConvertedObject -Row $Row -List $SubHeaders -Path $NewPath

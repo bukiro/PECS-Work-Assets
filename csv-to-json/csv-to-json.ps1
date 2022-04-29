@@ -38,6 +38,7 @@ $script:stringOverrides = @(
     "^bulk$",
     "gainSpells\/[\d]+\/dynamicLevel$",
     "\/[\d]+\/0/dynamicEffectiveSpellLevel$",
+    "desc\/[\d]+\/value$",
     "descs\/[\d]+\/value$",
     "^specialreq$"
 )

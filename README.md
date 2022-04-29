@@ -64,8 +64,8 @@ Internal To Do list
 - [x] Cleanup Savegame
 - [x] Load/Save from/to Database
 - [x] Action Icons
-- [x] Implement all Ancestries (excluding Advanced Character Guide)
-- [ ] Implement all Ancestry Feats (excluding Advanced Character Guide)
+- [x] Implement all Core and Character Guide Ancestries
+- [ ] Implement all Core and Character Guide Ancestry Feats
 - [x] - Dwarf
 - [x] - Elf
 - [ ] - Gnome
@@ -77,9 +77,9 @@ Internal To Do list
 - [ ] - Leshy
 - [x] - Lizardfolk
 - [ ] - Shoony
-- [x] Implement all Heritages (excluding Advanced Character Guide)
-- [x] Implement all Backgrounds (excluding Advanced Character Guide)
-- [ ] Implement all Classes and Multiclass Archetypes (excluding Advanced Character Guide)
+- [x] Implement all Core and Character Guide Heritages
+- [x] Implement all Core and Character Guide Backgrounds
+- [ ] Implement all Core and Character Guide Classes and Multiclass Archetypes
 - [ ] - Alchemist
 - [x] - Barbarian
 - [x] - Bard
@@ -107,7 +107,7 @@ Internal To Do list
 - [x] - Level 3 Spells
 - [x] - Level 4 Spells
 - [x] - Level 5 Spells
-- [ ] - Level 6 Spells
+- [x] - Level 6 Spells
 - [ ] - Level 7 Spells
 - [ ] - Level 8 Spells
 - [ ] - Level 9 Spells
@@ -124,18 +124,31 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
+- Type item in itemContent.component
+- Show deity's restrictionDesc on cleric spells in spells and spellbook components
+- Hero Points are limited to 3
 
 Implement:
 - Cache system to prevent re-calculating complicated values if nothing has changed
-- "When a character creates consumable items, they can make them in batches of four."
+- Dust of Disappearance
 
 Test:
 
 Bugs:
+- Gaining a light item (e.g. moderate healing potion) from another character that tips over the encumbrance limit doesn't update effects.
 
-Next steps:
-- Use eslint
-- Use strict templates
+To do:
+- Move customfeats that are always generated out of the character and into the FeatsService
+- Error handling in all steps of the saving process.
+- "When a character creates consumable items, they can make them in batches of four."
+- Feat.meetsHeritageReq should check the level that additional heritages were gained on
+- ItemActivity.data should be removed if not used.
+- Subscribes
+- - Fix deprecated subscribes
+- - http calls don't need to unsubscribe
+- - Change one-time subscriptions from unsubscribe to pipe(take(1))
+- ngOnInit content can often be moved to constructor
+- Replacements within foreach() should be changed to map()
 - Create Modal directive that allows modals that don't close when clicking outside
 - Improve inventory html with InventoryParameters & ItemParameters
 - Apply errata if needed

@@ -124,29 +124,29 @@ Internal To Do list
 - [ ] Stretch Goal: Exporting statblock and files for other tools (e.g. Foundry VTT)
 
 Active to-do:
-- Type item in itemContent.component
-- Show deity's restrictionDesc on cleric spells in spells and spellbook components
-- Hero Points are limited to 3
+- Move customfeats that are always generated out of the character and into the FeatsService
 
 Implement:
 - Cache system to prevent re-calculating complicated values if nothing has changed
-- Dust of Disappearance
 
 Test:
 
 Bugs:
 - Gaining a light item (e.g. moderate healing potion) from another character that tips over the encumbrance limit doesn't update effects.
+- When unequipping the first armor, the first armor is immediately equipped. Either don't allow the removed armor in the automatism, or always equip "unarmored" when the armor is unequipped, or notify when armor (and weapon) is automatically equipped.
 
 To do:
-- Move customfeats that are always generated out of the character and into the FeatsService
+- Type item in itemContent.component
+- Show deity's restrictionDesc on cleric spells in spells and spellbook components
+- Hero Points should be limited to 3
 - Error handling in all steps of the saving process.
 - "When a character creates consumable items, they can make them in batches of four."
-- Feat.meetsHeritageReq should check the level that additional heritages were gained on
 - ItemActivity.data should be removed if not used.
 - Subscribes
 - - Fix deprecated subscribes
 - - http calls don't need to unsubscribe
 - - Change one-time subscriptions from unsubscribe to pipe(take(1))
+- - Change component-duration subscriptions to takeUntil(destroyed$)
 - ngOnInit content can often be moved to constructor
 - Replacements within foreach() should be changed to map()
 - Create Modal directive that allows modals that don't close when clicking outside

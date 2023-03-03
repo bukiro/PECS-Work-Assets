@@ -5,7 +5,7 @@ In the service's main folder:
 In Linux, navigate to the same folder:
     npm run publish-linux
 Back in Windows: Make a copy of the publish folder:
-Remove all files except service.js, service.exe, service, readme.txt, config.json.example and config.json
+Remove all files except service.js, service.exe, service, readme.txt and config.json.example
 Rename the folder to pecs-data-service_<version> and pack it into pecs-data-service_<version>.zip
 
 For PECS:
@@ -15,7 +15,7 @@ Navigate to the PECS folder:
 In Linux, navigate to the same folder:
     npm run publish-linux
 Back in Windows: Make a copy of the publish folder:
-Remove all files except src/, pecs.js, pecs.exe, pecs, readme.txt, config.json.example and config.json
+Remove all files except src/, pecs.js, pecs.exe, pecs, readme.txt and config.json.example
 Remove src/assets/config.json
 Remove all custom data from src/assets/json (search for custom_*.json and extensions.json if needed)
 Rename the folder to pecs_<version> and pack it into pecs_<version>.zip
